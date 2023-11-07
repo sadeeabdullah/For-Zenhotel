@@ -1,5 +1,5 @@
 const express = require('express');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 const cors = require('cors');
 
@@ -48,13 +48,33 @@ async function run() {
 
     // post booking
     app.post('/api/v1/create-bookings', async(req, res) => {
-      console.log("hello")
       const bookings = req.body;
-      console.log(bookings);
       const result = await BookingsCollection.insertOne(bookings)
       res.send(result)
     })
-    // update booking
+    // update booking while someone booked that service
+
+    app.patch('/api/v1/booked', async(req,res) => {
+      const {availblity, id} = req.body;
+      console.log(id)
+      const filter = {_id: new ObjectId(id)}
+      const options = {
+        upsert: true
+      }
+      const updatedDoc = {
+        $set:{
+          booking_status:availblity,
+        }
+      }
+      const result = await roomsCollection.updateOne(filter,updatedDoc,options)
+      res.send(result)
+    })
+
+    // get the createdBookings
+    app.get('/api/v1/bookings', async( req, res ) => {
+      const result = await BookingsCollection.find().toArray();
+        res.send(result)
+    })
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
