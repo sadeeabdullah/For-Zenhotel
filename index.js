@@ -1,6 +1,6 @@
 const express = require('express');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
-
+var jwt = require('jsonwebtoken');
 const cors = require('cors');
 
 const app = express();
@@ -39,6 +39,12 @@ async function run() {
 
 
 
+    // auth related api
+
+    app.post('/jwt',)
+
+
+
     //use postman to post the rooms the data 
 
     app.get('/api/v1/rooms', async( req, res ) => {
@@ -55,15 +61,15 @@ async function run() {
     // update booking while someone booked that service
 
     app.patch('/api/v1/booked', async(req,res) => {
-      const {availblity, id} = req.body;
-      console.log(id)
+      const {availiblity, id} = req.body;
+      console.log(availiblity)
       const filter = {_id: new ObjectId(id)}
       const options = {
         upsert: true
       }
       const updatedDoc = {
         $set:{
-          booking_status:availblity,
+          booking_status:availiblity,
         }
       }
       const result = await roomsCollection.updateOne(filter,updatedDoc,options)
@@ -75,6 +81,11 @@ async function run() {
       const result = await BookingsCollection.find().toArray();
         res.send(result)
     })
+
+
+
+    // booking cancelling
+
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
