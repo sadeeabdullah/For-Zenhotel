@@ -1,16 +1,18 @@
 const express = require('express');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 var jwt = require('jsonwebtoken');
+const cookieParser = require('cookie-parser');
 const cors = require('cors');
-
+require('dotenv').config()
 const app = express();
 const port = process.env.PORT || 5000;
 
 app.use(express.json());
 app.use(cors({
-  origin:['http://localhost:5173']
+  origin: ['http://localhost:5173'],
+  credentials:true,
 }));
-
+app.use(cookieParser());
 
 // MONGODB URI
 const uri = "mongodb+srv://zentalhotel:lqkrEM2WSye4gK3O@cluster0.ncskwvc.mongodb.net/?retryWrites=true&w=majority";
@@ -36,13 +38,47 @@ async function run() {
     const roomsCollection = client.db("zenhotel").collection("rooms")
     const BookingsCollection = client.db("zenhotel").collection("bookings")
 
+   // middlewares
+    // verify token and grant access 
+    const verifyToken = (req, res, next) =>{
+      const {token} = req.cookies;
+      if(!token){
+          return res.status(401).send({message:'unauthorized access'})
+      }
+      jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded ) =>{
+          if(err){
+              return res.status(401).send('unauthorized access')
+          }
 
+          // attach decoded user so other can get it
+          req.user =decoded;
+          next();
+      })
+  }
 
 
     // auth related api
 
-    app.post('/jwt',)
+    app.post('/api/v1/access-token', (req, res) =>{
+      const user = req.body;
+      console.log("user from the token",user)
+      const token = jwt.sign(user,process.env.ACCESS_TOKEN_SECRET,{expiresIn: '1h'})
+      res.cookie("token",token,{
+        httpOnly:true,
+        secure:true,
+        sameSite:'none'
+      })
+      .send({success:true})
+    })
 
+
+
+    // when user logout clear the cookie
+    app.post('/api/v1/logout', async( req, res ) => {
+      const user = req.body;
+      console.log("logging out ",user)
+      res.clearCookie('token',{maxAge:0}).send({success:true})
+    })
 
 
     //use postman to post the rooms the data 
@@ -77,8 +113,17 @@ async function run() {
     })
 
     // get the createdBookings
-    app.get('/api/v1/bookings', async( req, res ) => {
-      const result = await BookingsCollection.find().toArray();
+    app.get('/api/v1/bookings', verifyToken,async( req, res ) => {
+      console.log(req.query.email)
+      // console.log("cooookies",req.user.email)
+      if(req.user.email !== req.query.email){
+        return res.status(403).send({message:'forbidden access'})
+      }
+      let queries = {}
+      if(req.query?.email){
+        query ={email:req.query?.email}
+      }
+      const result = await BookingsCollection.find(queries).toArray();
         res.send(result)
     })
 
