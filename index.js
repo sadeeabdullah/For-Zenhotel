@@ -50,7 +50,7 @@ async function run() {
     app.post('/api/v1/create-bookings', async(req, res) => {
       console.log("hello")
       const bookings = req.body;
-      console.log(bookings)
+      console.log(bookings);
       // const result = await BookingsCollection.insertOne(bookings)
       res.send("result")
     })
