@@ -51,8 +51,8 @@ async function run() {
       console.log("hello")
       const bookings = req.body;
       console.log(bookings);
-      // const result = await BookingsCollection.insertOne(bookings)
-      res.send("result")
+      const result = await BookingsCollection.insertOne(bookings)
+      res.send(result)
     })
     // update booking
 
