@@ -61,7 +61,6 @@ async function run() {
 
     app.post('/api/v1/access-token', (req, res) =>{
       const user = req.body;
-      console.log("user from the token",user)
       const token = jwt.sign(user,process.env.ACCESS_TOKEN_SECRET,{expiresIn: '1h'})
       res.cookie("token",token,{
         httpOnly:true,
@@ -76,7 +75,6 @@ async function run() {
     // when user logout clear the cookie
     app.post('/api/v1/logout', async( req, res ) => {
       const user = req.body;
-      console.log("logging out ",user)
       res.clearCookie('token',{maxAge:0}).send({success:true})
     })
 
@@ -97,9 +95,30 @@ async function run() {
     // update booking while someone booked that service
 
     app.patch('/api/v1/booked', async(req,res) => {
+
       const {availiblity, id} = req.body;
-      console.log(availiblity)
       const filter = {_id: new ObjectId(id)}
+      console.log('hitted with',availiblity,id)
+      const options = {
+        upsert: true
+      }
+      const updatedDoc = {
+        $set:{
+          booking_status:availiblity,
+        }
+      }
+      const result = await roomsCollection.updateOne(filter,updatedDoc,options)
+      res.send(result)
+    })
+
+    // update when someone delete the booking
+    
+    app.patch('/api/v1/delete', async(req,res) => {
+
+      const {availiblity, image} = req.body;
+      console.log('hitted with',availiblity,image)
+      const filter = {image1:image}
+      
       const options = {
         upsert: true
       }
@@ -114,8 +133,6 @@ async function run() {
 
     // get the createdBookings
     app.get('/api/v1/bookings', verifyToken,async( req, res ) => {
-      console.log(req.query.email)
-      // console.log("cooookies",req.user.email)
       if(req.user.email !== req.query.email){
         return res.status(403).send({message:'forbidden access'})
       }
@@ -127,6 +144,26 @@ async function run() {
         res.send(result)
     })
 
+
+    // get specific data of rooms
+    app.get('/api/v1/rooms/:id', async(req, res) =>{
+      const id =  req.params.id
+      const query = {_id:new ObjectId(id)}
+      
+      const result = await roomsCollection.findOne(query)
+      res.send(result)
+    })
+
+
+
+    // adding delete method to delete data from the  bookings collection
+
+    app.delete('/api/v1/delete-booking/:id',async(req, res) =>{
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)}
+      const result = await BookingsCollection.deleteOne(query)
+      res.send(result)
+    })
 
 
     // booking cancelling
