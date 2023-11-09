@@ -96,7 +96,7 @@ async function run() {
 
     app.patch('/api/v1/booked', async(req,res) => {
 
-      const {availiblity, id} = req.body;
+      const {availiblity, id,booking_duration} = req.body;
       const filter = {_id: new ObjectId(id)}
       console.log('hitted with',availiblity,id)
       const options = {
@@ -105,13 +105,36 @@ async function run() {
       const updatedDoc = {
         $set:{
           booking_status:availiblity,
+          booking_duration:booking_duration,
         }
       }
       const result = await roomsCollection.updateOne(filter,updatedDoc,options)
       res.send(result)
     })
 
-    // update when someone delete the booking
+    // update bookings when user update the date from my booking
+
+    app.patch('/api/v1/update-booking-date', async(req,res) => {
+
+      const {id,selectedDate} = req.body;
+      const filter = {_id: new ObjectId(id)}
+      console.log(id,selectedDate)
+      const options = {
+        upsert: true
+      }
+      const updatedDoc = {
+        $set:{
+          booking_duration:selectedDate,
+        }
+      }
+      const result = await roomsCollection.updateOne(filter,updatedDoc,options)
+      console.log(result)
+      res.send(result)
+    })
+
+
+
+    // update rooms when someone delete the booking
     
     app.patch('/api/v1/delete', async(req,res) => {
 
@@ -130,6 +153,28 @@ async function run() {
       const result = await roomsCollection.updateOne(filter,updatedDoc,options)
       res.send(result)
     })
+
+
+    // update reviews
+
+    app.patch('/api/v1/review-post', async(req,res) => {
+
+      const {reviews,id} = req.body;
+      // console.log('hitted with',reviews,id)
+      const filter = {image1:id}
+      
+      const options = {
+        upsert: true
+      }
+      const updatedDoc = {
+        $push:{
+          reviews:reviews,
+        }
+      }
+      const result = await roomsCollection.updateOne(filter,updatedDoc,options)
+      res.send(result)
+    })
+
 
     // get the createdBookings
     app.get('/api/v1/bookings', verifyToken,async( req, res ) => {
