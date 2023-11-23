@@ -10,8 +10,8 @@ const port = process.env.PORT || 5000;
 app.use(express.json());
 app.use(cors({
   origin: [
-    // 'https://zenhotel-3e57c.web.app',
-    // 'https://zenhotel-3e57c.firebaseapp.com',
+    'https://zenhotel-3e57c.web.app',
+    'https://zenhotel-3e57c.firebaseapp.com',
     'http://localhost:5000',
   ],
   credentials:true,
@@ -70,7 +70,7 @@ async function run() {
         httpOnly: true,
         // secure: process.env.NODE_ENV === 'production',
         // sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
-        secure:false,
+        secure:true,
         sameSite:'none'
       })
       .send({ success: true })
