@@ -9,13 +9,17 @@ const port = process.env.PORT || 5000;
 
 app.use(express.json());
 app.use(cors({
-  origin: ['http://localhost:5173'],
+  origin: [
+    // 'https://zenhotel-3e57c.web.app',
+    // 'https://zenhotel-3e57c.firebaseapp.com',
+    'http://localhost:5000',
+  ],
   credentials:true,
 }));
 app.use(cookieParser());
 
 // MONGODB URI
-const uri = "mongodb+srv://zentalhotel:lqkrEM2WSye4gK3O@cluster0.ncskwvc.mongodb.net/?retryWrites=true&w=majority";
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.ncskwvc.mongodb.net/?retryWrites=true&w=majority`
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -62,12 +66,14 @@ async function run() {
     app.post('/api/v1/access-token', (req, res) =>{
       const user = req.body;
       const token = jwt.sign(user,process.env.ACCESS_TOKEN_SECRET,{expiresIn: '1h'})
-      res.cookie("token",token,{
-        httpOnly:true,
-        secure:true,
+      res.cookie('token', token, {
+        httpOnly: true,
+        // secure: process.env.NODE_ENV === 'production',
+        // sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
+        secure:false,
         sameSite:'none'
       })
-      .send({success:true})
+      .send({ success: true })
     })
 
 
@@ -127,7 +133,7 @@ async function run() {
           booking_duration:selectedDate,
         }
       }
-      const result = await roomsCollection.updateOne(filter,updatedDoc,options)
+      const result = await BookingsCollection.updateOne(filter,updatedDoc,options)
       console.log(result)
       res.send(result)
     })
